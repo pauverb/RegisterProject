@@ -14,20 +14,28 @@ int main() {
     for (int cycle = 0; cycle < 4; ++cycle) {
         std::cout << "Cycle " << cycle + 1 << ":\n";
 
-        int currentbit = 1 << (cycle % 8); // Rotate through bits 0–7
+        int bitIndex = cycle % 8; // Use bit index, not bitmask
 
-        std::cout << "Activating bit " << (cycle % 8) << "\n";
-        sensor->activateBit(currentbit);
-        actuator->activateBit(currentbit);
+        std::cout << "Activating bit " << bitIndex << "\n";
+        try {
+            sensor->activateBit(bitIndex);
+            actuator->activateBit(bitIndex);
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Activation failed: " << e.what() << std::endl;
+        }
 
         sensor->diagnose();
         actuator->diagnose();
 
         if (cycle > 0) {
-            int prevBit = 1 << ((cycle - 1) % 8);
-            std::cout << "Deactivating bit " << ((cycle - 1) % 8) << "\n";
-            sensor->deactivateBit(prevBit);
-            actuator->deactivateBit(prevBit);
+            int prevBitIndex = (cycle - 1) % 8;
+            std::cout << "Deactivating bit " << prevBitIndex << "\n";
+            try {
+                sensor->deactivateBit(prevBitIndex);
+                actuator->deactivateBit(prevBitIndex);
+            } catch (const std::out_of_range& e) {
+                std::cerr << "Deactivation failed: " << e.what() << std::endl;
+            }
         }
 
         std::cout << "-----------------------------\n";
