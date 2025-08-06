@@ -1,69 +1,39 @@
-// Thix to do later with this project 
-// at the end split into header files *.hpp and main.cpp
-// also try cmake ; maybe even with previuos file
 #include <iostream>
-#include <cstdint>
-#include <bitset>
 #include <vector>
 #include <memory>
+#include <thread>
+#include "Sensor.hpp"
+#include "Actuator.hpp"
 
+int main() {
+    auto sensor = std::make_unique<Sensor>();
+    auto actuator = std::make_unique<Actuator>();
 
-// == will be moved to another file 
-template <typename T>
-class Register {
-    T value;
-    public:
-    Register(): value(T{}) {} // constructor
-    T read() const {         // why const ? const means that this method doesnt modify the object
-        return value;
-    }
-    void write(T Val){
-        value = Val;
-    }
-     
-    void setBit(int bit){
-        if(bit>8 || bit < 0){
-            throw std::out_of_range("Bit index out of range");
+    std::cout << "Starting a simple testing..." << std::endl;
+
+    for (int cycle = 0; cycle < 4; ++cycle) {
+        std::cout << "Cycle " << cycle + 1 << ":\n";
+
+        int currentbit = 1 << (cycle % 8); // Rotate through bits 0–7
+
+        std::cout << "Activating bit " << (cycle % 8) << "\n";
+        sensor->activateBit(currentbit);
+        actuator->activateBit(currentbit);
+
+        sensor->diagnose();
+        actuator->diagnose();
+
+        if (cycle > 0) {
+            int prevBit = 1 << ((cycle - 1) % 8);
+            std::cout << "Deactivating bit " << ((cycle - 1) % 8) << "\n";
+            sensor->deactivateBit(prevBit);
+            actuator->deactivateBit(prevBit);
         }
-        value |= (1<<bit);
-    }
-    void clearBit(int bit){
-        value &= ~(1<<bit);
-    }
-    bool isBitSet(int bit) const {
-        return value & (1 << bit);
-    }
-};
 
-//==
-
-class Device{   /// Base class
-    public:
-    virtual void diagnose() const = 0;
-    virtual ~Device(){}
-};
-
-
-class Sensor:public Device{ // derives class[Sensor] from base class[Device]
-    Register<int8_t> reg; // here type is an object 
-    public:
-    Sensor() {
-        reg.write(0b00001111); // initial value if not set
-    } 
-    void diagnose() const override{
-        std :: cout << "Sensor read: " << std::bitset<8>(reg.read()) << std::endl;
+        std::cout << "-----------------------------\n";
+        std::this_thread::sleep_for(std::chrono::microseconds(500));
     }
 
-};
-
-int main() {    
-    std::vector<std::unique_ptr<Device>> devices; // Device is an abstact class need to be stored pointers
-
-    devices.push_back(std::make_unique<Sensor>());
-    devices.push_back(std::make_unique<Sensor>());
-
-    for(const auto& device : devices){
-        device->diagnose();
-    }
+    std::cout << "Test loop completed." << std::endl;
     return 0;
 }
